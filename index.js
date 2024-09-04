@@ -1,68 +1,71 @@
 document.addEventListener('DOMContentLoaded', () => {
-    loadEntriesFromLocalStorage();
+    const form = document.getElementById('registrationForm');
+    const entries = document.getElementById('entries');
 
-    document.getElementById('registration-form').addEventListener('submit', function(event) {
+    form.addEventListener('submit', function(event) {
         event.preventDefault();
-        if (validateForm()) {
-            addEntryToTable();
-            saveEntriesToLocalStorage();
-            this.reset(); // Reset the form after submission
+
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const dob = document.getElementById('dob').value;
+        const terms = document.getElementById('terms').checked;
+
+        // Validate date of birth for age between 18 and 55
+        const dobDate = new Date(dob);
+        const today = new Date();
+        const age = today.getFullYear() - dobDate.getFullYear();
+        const month = today.getMonth() - dobDate.getMonth();
+
+        if (month < 0 || (month === 0 && today.getDate() < dobDate.getDate())) {
+            age--;
         }
+
+        if (age < 18 || age > 55) {
+            alert('Date of Birth must be between 18 and 55 years old.');
+            return;
+        }
+
+        // Create a new row in the table
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>${name}</td>
+            <td>${email}</td>
+            <td>${password}</td>
+            <td>${dob}</td>
+            <td>${terms ? 'Yes' : 'No'}</td>
+        `;
+
+        // Append the new row to the table
+        entries.appendChild(newRow);
+
+        // Save data to local storage
+        saveDataToLocalStorage({ name, email, password, dob, terms });
     });
+
+    // Load saved data from local storage
+    loadSavedData();
 });
 
-function addEntryToTable() {
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const dob = document.getElementById('dob').value;
-    const accepted = document.getElementById('accepted').checked;
-
-    const tableBody = document.getElementById('table-body');
-    const row = tableBody.insertRow();
-    row.insertCell(0).textContent = name;
-    row.insertCell(1).textContent = email;
-    row.insertCell(2).textContent = password;
-    row.insertCell(3).textContent = dob;
-    row.insertCell(4).textContent = accepted ? 'Yes' : 'No';
+function saveDataToLocalStorage(data) {
+    const savedEntries = JSON.parse(localStorage.getItem('entries')) || [];
+    savedEntries.push(data);
+    localStorage.setItem('entries', JSON.stringify(savedEntries));
 }
 
-function saveEntriesToLocalStorage() {
-    const tableBody = document.getElementById('table-body');
-    const rows = tableBody.getElementsByTagName('tr');
-    const entries = Array.from(rows).map(row => {
-        return Array.from(row.cells).map(cell => cell.textContent);
+function loadSavedData() {
+    const savedEntries = JSON.parse(localStorage.getItem('entries')) || [];
+    const entries = document.getElementById('entries');
+
+    savedEntries.forEach(entry => {
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>${entry.name}</td>
+            <td>${entry.email}</td>
+            <td>${entry.password}</td>
+            <td>${entry.dob}</td>
+            <td>${entry.terms ? 'Yes' : 'No'}</td>
+        `;
+        entries.appendChild(newRow);
     });
-    localStorage.setItem('entries', JSON.stringify(entries));
-}
-
-function loadEntriesFromLocalStorage() {
-    const entries = JSON.parse(localStorage.getItem('entries')) || [];
-    const tableBody = document.getElementById('table-body');
-    entries.forEach(entry => {
-        const row = tableBody.insertRow();
-        entry.forEach(cellData => row.insertCell().textContent = cellData);
-    });
-}
-
-function validateForm() {
-    const email = document.getElementById('email').value;
-    const dob = document.getElementById('dob').value;
-    return validateEmail(email) && validateAge(dob);
-}
-
-function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
-
-function validateAge(dob) {
-    const today = new Date();
-    const birthDate = new Date(dob);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const month = today.getMonth() - birthDate.getMonth();
-    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
-    return age >= 18 && age <= 55;
 }
