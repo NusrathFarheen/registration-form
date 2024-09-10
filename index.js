@@ -1,70 +1,52 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registrationForm');
-    const entries = document.getElementById('entries');
+document.getElementById('registrationForm').addEventListener('submit', function(event) {
+    event.preventDefault();
 
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const dob = new Date(document.getElementById('dob').value);
+    const acceptTerms = document.getElementById('acceptTerms').checked;
 
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const dob = document.getElementById('dob').value;
-        const terms = document.getElementById('terms').checked;
+    // Validate the date of birth
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    const monthDifference = today.getMonth() - dob.getMonth();
+    const isBirthdayPassed = monthDifference > 0 || (monthDifference === 0 && today.getDate() >= dob.getDate());
 
-        // Validate date of birth for age between 18 and 55
-        const dobDate = new Date(dob);
-        const today = new Date();
-        let age = today.getFullYear() - dobDate.getFullYear();
-        const monthDiff = today.getMonth() - dobDate.getMonth();
+    if (age < 18 || (age > 55 || (age === 55 && !isBirthdayPassed))) {
+        alert('You must be between 18 and 55 years old.');
+        return;
+    }
 
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
-            age--;
-        }
+    // Validate terms acceptance
+    if (!acceptTerms) {
+        alert('You must accept the terms.');
+        return;
+    }
 
-        if (age < 18 || age > 55) {
-            alert('Date of Birth must be between 18 and 55 years old.');
-            return;
-        }
+    // Add data to the table
+    const tableBody = document.querySelector('#entriesTable tbody');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${name}</td>
+        <td>${email}</td>
+        <td>${password}</td>
+        <td>${dob.toISOString().split('T')[0]}</td>
+        <td>${acceptTerms ? 'Yes' : 'No'}</td>
+    `;
+    tableBody.appendChild(row);
 
-        // Create an entry object
-        const entry = { name, email, password, dob, terms };
-
-        // Add entry to the table
-        addEntryToTable(entry);
-
-        // Save data to local storage
-        saveDataToLocalStorage(entry);
-
-        // Clear form inputs
-        form.reset();
-    });
-
-    // Load saved data from local storage when the page loads
-    loadSavedData();
+    // Save data to local storage (optional)
+    saveData();
 });
 
-function addEntryToTable(entry) {
-    const entries = document.getElementById('entries');
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-        <td>${entry.name}</td>
-        <td>${entry.email}</td>
-        <td>${entry.password}</td>
-        <td>${entry.dob}</td>
-        <td>${entry.terms ? 'Yes' : 'No'}</td>
-    `;
-    entries.appendChild(newRow);
+function saveData() {
+    // Add your logic to save form data to local storage here
 }
 
-function saveDataToLocalStorage(entry) {
-    const savedEntries = JSON.parse(localStorage.getItem('entries')) || [];
-    savedEntries.push(entry);
-    localStorage.setItem('entries', JSON.stringify(savedEntries));
+function loadData() {
+    // Add your logic to load form data from local storage here
 }
 
-function loadSavedData() {
-    const savedEntries = JSON.parse(localStorage.getItem('entries')) || [];
-    savedEntries.forEach(entry => {
-        addEntryToTable(entry);
-    });
-}
+// Load saved data on page load (optional)
+window.onload = loadData;
